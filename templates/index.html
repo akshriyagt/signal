@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal — Call Recording Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="14" width="3" height="4" rx="1" fill="currentColor"/>
+        <rect x="8" y="10" width="3" height="12" rx="1" fill="currentColor"/>
+        <rect x="13" y="4" width="3" height="24" rx="1" fill="currentColor"/>
+        <rect x="18" y="8" width="3" height="16" rx="1" fill="currentColor"/>
+        <rect x="23" y="12" width="3" height="8" rx="1" fill="currentColor"/>
+        <rect x="28" y="15" width="2" height="2" rx="1" fill="currentColor"/>
+      </svg>
+      <div class="brand-text">
+        <span class="brand-name">Signal</span>
+        <span class="brand-sub">call recording analyzer · runs on localhost</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="model-pill" id="modelPill">model: —</span>
+      <button class="btn btn-ghost" id="downloadCsvBtn" title="Download all results as CSV">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        CSV
+      </button>
+      <button class="btn btn-ghost" id="downloadJsonBtn" title="Download all results as JSON">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        JSON
+      </button>
+      <button class="btn btn-ghost btn-danger" id="clearAllBtn" title="Clear all pending results">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0v13a1 1 0 001 1h8a1 1 0 001-1V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Clear
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <section class="upload-panel" id="uploadPanel">
+      <div class="upload-drop" id="dropZone">
+        <svg class="upload-icon" viewBox="0 0 48 48" fill="none">
+          <path d="M24 6v24m0-24l-8 8m8-8l8 8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 32v6a4 4 0 004 4h24a4 4 0 004-4v-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="upload-title">Drop call recordings here</p>
+        <p class="upload-sub">or click to browse · MP3, WAV, M4A, OGG, AAC, FLAC, MP4 · any spoken language · multiple files supported</p>
+        <input type="file" id="fileInput" multiple accept=".mp3,.wav,.m4a,.ogg,.aac,.flac,.wma,.opus,.mp4" hidden>
+      </div>
+
+      <div class="queue" id="queue"></div>
+
+      <div class="lang-override">
+        <label for="langSelect">Spoken language</label>
+        <select id="langSelect">
+          <option value="">Auto-detect</option>
+          <option value="kn">Kannada</option>
+          <option value="ta">Tamil</option>
+          <option value="te">Telugu</option>
+          <option value="ml">Malayalam</option>
+          <option value="hi">Hindi</option>
+          <option value="ur">Urdu</option>
+          <option value="en">English</option>
+        </select>
+        <span class="lang-override-hint">Short clips (under ~20s) don't give auto-detect enough to go on — if most of your calls are one language, pick it here to skip detection and get it right every time.</span>
+      </div>
+
+      <button class="btn btn-primary" id="analyzeBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v3m0 10v3M4 12h3m10 0h3M6.3 6.3l2 2m7.4 7.4l2 2m0-11.4l-2 2m-7.4 7.4l-2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Analyze calls
+      </button>
+    </section>
+
+    <section class="results-panel">
+      <div class="results-head">
+        <h2>Results</h2>
+        <div class="legend">
+          <span class="legend-item"><i class="dot dot-spam"></i>Spam</span>
+          <span class="legend-item"><i class="dot dot-important"></i>Important</span>
+          <span class="legend-item"><i class="dot dot-normal"></i>Normal</span>
+        </div>
+      </div>
+
+      <div class="stats-bar" id="statsBar">
+        <div class="stat-chip stat-total"><span class="stat-num" id="statTotal">0</span><span class="stat-label">Total</span></div>
+        <div class="stat-chip stat-spam"><span class="stat-num" id="statSpam">0</span><span class="stat-label">Spam</span></div>
+        <div class="stat-chip stat-important"><span class="stat-num" id="statImportant">0</span><span class="stat-label">Important</span></div>
+        <div class="stat-chip stat-normal"><span class="stat-num" id="statNormal">0</span><span class="stat-label">Normal</span></div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="spam">Spam</button>
+          <button class="filter-tab" data-filter="important">Important</button>
+          <button class="filter-tab" data-filter="normal">Normal</button>
+        </div>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search filename…">
+        <select id="sortSelect" class="sort-select">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="confidence">Confidence, high → low</option>
+        </select>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.5" opacity="0.35"/>
+          <path d="M20 32h6l4-10 8 20 4-10h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p>No calls analyzed yet. Add recordings above and hit <strong>Analyze calls</strong>.</p>
+      </div>
+
+      <div class="results-grid" id="resultsGrid"></div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span>Transcription runs locally via faster-whisper · classification is a transparent, inspectable keyword model · nothing leaves this machine</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/script.js"></script>
+</body>
+</html>
