@@ -60,7 +60,7 @@ MODEL_SIZE = os.environ.get("WHISPER_MODEL", "small")
 print(f"[call-analyzer] loading faster-whisper model '{MODEL_SIZE}' ...")
 # cpu_threads: use all available cores instead of the library default (4),
 # which noticeably speeds up long recordings on modern multi-core laptops.
-model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8", cpu_threads=os.cpu_count())
+model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8", cpu_threads=1)
 print("[call-analyzer] model ready.")
 
 # Minimum probability below which we consider the detected language
