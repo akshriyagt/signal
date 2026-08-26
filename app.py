@@ -60,7 +60,7 @@ MODEL_SIZE = os.environ.get("WHISPER_MODEL", "small")
 print(f"[call-analyzer] loading faster-whisper model '{MODEL_SIZE}' ...")
 # cpu_threads: use all available cores instead of the library default (4),
 # which noticeably speeds up long recordings on modern multi-core laptops.
-model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8", cpu_threads=1)
+model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8", cpu_threads=os.cpu_count())
 print("[call-analyzer] model ready.")
 
 # Minimum probability below which we consider the detected language
@@ -685,4 +685,5 @@ def download_json():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
